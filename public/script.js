@@ -1,22 +1,57 @@
-// 🌐 Backend URL (use localhost for local development)
+// ============================
+// 🌐 Backend URL
+// ============================
 const API_URL = "http://localhost:5000";
 
-// 🔹 Section switching (Login / Signup / Forgot / Chatbot)
+
+// ============================
+// 🔹 AUTO LOGIN CHECK
+// ============================
+window.onload = function () {
+
+  if (localStorage.getItem("isLoggedIn") === "true") {
+    showSection("chatPage");
+  } else {
+    showSection("loginPage");
+  }
+  
+
+  const input = document.getElementById("userInput");
+  if (input) {
+    input.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  }
+};
+
+
+// ============================
+// 🔹 SECTION SWITCHING
+// ============================
 function showSection(sectionId) {
-  document.querySelectorAll(".form-container, .chat-container").forEach(div => {
-    div.style.display = "none";
-  });
-  document.querySelector(".input-area").style.display = "none";
-  document.getElementById(sectionId).style.display = "block";
+
+  document.querySelectorAll(".form-container, .chat-container")
+    .forEach(div => div.style.display = "none");
+
+  const section = document.getElementById(sectionId);
+  if (section) section.style.display = "block";
+
   if (sectionId === "chatPage") {
-    document.querySelector(".input-area").style.display = "flex";
+    const chatBox = document.getElementById("chatBox");
+    if (chatBox) {
+      chatBox.innerHTML = "";
+      loadChatHistory();
+      scrollToBottom();
+    }
   }
 }
+
 
 // ============================
 // 🔹 LOGIN
 // ============================
 async function login() {
+
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
 
@@ -33,22 +68,34 @@ async function login() {
     });
 
     const data = await res.json();
+
     if (data.message === "Login successful") {
-      alert("✅ Login successful!");
+
+      localStorage.setItem("isLoggedIn", "true");
+
+      const userObj = {
+        name: data.name || email.split("@")[0],
+        email: email
+      };
+
+      localStorage.setItem("user", JSON.stringify(userObj));
       showSection("chatPage");
+
     } else {
-      alert(data.error || "❌ Login failed!");
+      alert(data.error || "Login failed!");
     }
+
   } catch (err) {
-    console.error("Login error:", err);
-    alert("⚠️ Server error while login");
+    alert("⚠️ Server error during login.");
   }
 }
+
 
 // ============================
 // 🔹 SIGNUP
 // ============================
 async function signup() {
+
   const name = document.getElementById("signupName").value.trim();
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value.trim();
@@ -66,228 +113,199 @@ async function signup() {
     });
 
     const data = await res.json();
-    if (data.message) {
-      alert("🎉 Signup successful! You can now login.");
-      showSection("loginPage");
-    } else {
-      alert(data.error || "Signup failed!");
-    }
+    alert(data.message || data.error);
+
+    if (data.message) showSection("loginPage");
+
   } catch (err) {
-    console.error("Signup error:", err);
-    alert("⚠️ Server error while signup");
+    alert("⚠️ Server error during signup.");
   }
 }
 
-// ============================
-// 🔹 FORGOT PASSWORD
-// ============================
-async function forgotPassword() {
-  const email = document.getElementById("forgotEmail").value.trim();
 
-  if (!email) {
-    alert("⚠️ Please enter your email!");
+// ============================
+// 🔹 SEND MESSAGE
+// ============================
+async function sendMessage() {
+
+  const inputField = document.getElementById("userInput");
+  const message = inputField.value.trim();
+  if (!message) return;
+
+  // USER MESSAGE
+  addMessage("user", message);
+  inputField.value = "";
+
+  // BOT LOADING MESSAGE
+  const botDiv = addMessage("bot", "Thinking...");
+
+  scrollToBottom();
+
+  try {
+    const res = await fetch(`${API_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await res.json();
+    const reply = data.reply || "AI service unavailable.";
+
+    botDiv.innerText = reply;
+
+    speakText(reply);
+    saveChat(message, reply);
+
+  } catch (err) {
+    botDiv.innerText = "⚠️ Server error. Please try again.";
+  }
+
+  scrollToBottom();
+}
+
+
+// ============================
+// 🔹 ADD MESSAGE (FIXED)
+// ============================
+function addMessage(sender, text) {
+
+  const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return null;
+
+  const message = document.createElement("div");
+  message.classList.add("message", sender);
+  message.innerText = text;
+
+  chatBox.appendChild(message);
+
+  setTimeout(() => {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 50);
+
+  return message;   // ✅ VERY IMPORTANT
+}
+
+
+// ============================
+// 🔹 CHAT HISTORY
+// ============================
+function saveChat(userMsg, botMsg) {
+
+  let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+  history.push({ sender: "You", message: userMsg });
+  history.push({ sender: "Bot", message: botMsg });
+
+  localStorage.setItem("chatHistory", JSON.stringify(history));
+}
+
+
+function loadChatHistory() {
+
+  let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+  history.forEach(chat => {
+    addMessage(
+      chat.sender === "You" ? "user" : "bot",
+      chat.message
+    );
+  });
+}
+
+
+// ============================
+// 🔹 SCROLL FIX
+// ============================
+function scrollToBottom() {
+
+  const chatBox = document.getElementById("chatBox");
+
+  if (chatBox) {
+    chatBox.scrollTo({
+      top: chatBox.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+}
+
+
+// ============================
+// 🔹 VOICE RECOGNITION
+// ============================
+function startListening() {
+
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Speech recognition not supported.");
     return;
   }
 
-  try {
-    const res = await fetch(`${API_URL}/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.start();
 
-    const data = await res.json();
-    alert(data.message || data.error);
-    if (data.message) showSection("loginPage");
-  } catch (err) {
-    console.error("Forgot password error:", err);
-    alert("⚠️ Server error while password reset");
-  }
+  recognition.onresult = function (event) {
+    document.getElementById("userInput").value =
+      event.results[0][0].transcript;
+  };
 }
 
+
 // ============================
-// 🔹 Helper function to check if user is near bottom
+// 🔹 TEXT TO SPEECH
 // ============================
-function isNearBottom(chatBox) {
-  return chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 50; // 50px threshold
+function speakText(text) {
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-IN";
+  window.speechSynthesis.speak(speech);
 }
 
+
 // ============================
-// 🔹 AI Chatbot
+// 🔹 DARK MODE
 // ============================
-async function sendMessage() {
-  const input = document.getElementById("userInput").value.trim();
-  if (!input) return;
-
-  const chatBox = document.getElementById("chatBox");
-
-  // 🧍 User message
-  const userDiv = document.createElement("div");
-  userDiv.className = "user";
-  userDiv.textContent = input;
-  chatBox.appendChild(userDiv);
-
-  // 🤖 Bot reply (temporary loading message)
-  const botDiv = document.createElement("div");
-  botDiv.className = "bot";
-  botDiv.textContent = "Thinking...";
-  chatBox.appendChild(botDiv);
-
-  // Always auto-scroll to the latest message
-  botDiv.scrollIntoView({ behavior: 'smooth' });
-  document.getElementById("userInput").value = "";
-
-  try {
-    const res = await fetch(`${API_URL}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: input })
-    });
-
-    const data = await res.json();
-    botDiv.textContent = data.reply || "Sorry, I couldn’t understand.";
-  } catch (err) {
-    console.error("Chatbot error:", err);
-    botDiv.textContent = "⚠️ Server error while getting AI reply.";
-  }
-
-  // Always auto-scroll to the latest message
-  botDiv.scrollIntoView({ behavior: 'smooth' });
+function toggleTheme() {
+  document.body.classList.toggle("dark-mode");
 }
 
-// 🔹 Press Enter to send message
-document.getElementById("userInput").addEventListener("keypress", function (e) {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
-});
 
 // ============================
-// 🔹 Audio Recording
+// 🔹 HAMBURGER MENU
 // ============================
-let mediaRecorder;
-let audioChunks = [];
-let isRecording = false;
+function toggleMenu() {
 
-async function toggleRecording() {
-  const recordBtn = document.getElementById("recordBtn");
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
 
-  if (!isRecording) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        sendAudio(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      isRecording = true;
-      recordBtn.textContent = "⏹️ Stop";
-      recordBtn.style.background = "#ff0000";
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("⚠️ Could not access microphone. Please check permissions.");
-    }
-  } else {
-    mediaRecorder.stop();
-    isRecording = false;
-    recordBtn.textContent = "🎤 Record";
-    recordBtn.style.background = "#ffd700";
-  }
+  sidebar.style.left =
+    sidebar.style.left === "0px" ? "-250px" : "0px";
 }
 
-async function sendAudio(audioBlob) {
-  const chatBox = document.getElementById("chatBox");
 
-  // 🧍 User message
-  const userDiv = document.createElement("div");
-  userDiv.className = "user";
-  userDiv.textContent = "🎤 Audio message sent";
-  chatBox.appendChild(userDiv);
+// ============================
+// 🔹 LOGOUT
+// ============================
+function logout() {
 
-  // 🤖 Bot reply (temporary loading message)
-  const botDiv = document.createElement("div");
-  botDiv.className = "bot";
-  botDiv.textContent = "Processing audio...";
-  chatBox.appendChild(botDiv);
-
-  // Always auto-scroll to the latest message
-  botDiv.scrollIntoView({ behavior: 'smooth' });
-
-  const formData = new FormData();
-  formData.append("audio", audioBlob, "recording.wav");
-
-  try {
-    const res = await fetch(`${API_URL}/chat`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    botDiv.textContent = data.reply || "Sorry, I couldn’t process the audio.";
-  } catch (err) {
-    console.error("Audio send error:", err);
-    botDiv.textContent = "⚠️ Server error while processing audio.";
-  }
-
-  // Always auto-scroll to the latest message
-  botDiv.scrollIntoView({ behavior: 'smooth' });
+  localStorage.removeItem("isLoggedIn");
+  showSection("loginPage");
 }
 
+
 // ============================
-// 🔹 File Upload
+// 🔹 NAVIGATION
 // ============================
-document.getElementById("fileInput").addEventListener("change", function (event) {
-  const file = event.target.files[0];
-  if (file) {
-    sendFile(file);
-  }
-});
+function goToChat() {
+  window.location.href = "index.html";
+}
 
-async function sendFile(file) {
-  const chatBox = document.getElementById("chatBox");
+function showHelp() {
+  window.location.href = "help.html";
+}
 
-  // 🧍 User message
-  const userDiv = document.createElement("div");
-  userDiv.className = "user";
-  userDiv.textContent = `📎 File uploaded: ${file.name}`;
-  chatBox.appendChild(userDiv);
+function showProfile() {
+  window.location.href = "profile.html";
+}
 
-  // 🤖 Bot reply (temporary loading message)
-  const botDiv = document.createElement("div");
-  botDiv.className = "bot";
-  botDiv.textContent = "Processing file...";
-  chatBox.appendChild(botDiv);
-
-  if (isNearBottom(chatBox)) {
-    botDiv.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch(`${API_URL}/chat`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    botDiv.textContent = data.reply || "Sorry, I couldn’t process the file.";
-  } catch (err) {
-    console.error("File send error:", err);
-    botDiv.textContent = "⚠️ Server error while processing file.";
-  }
-
-  if (isNearBottom(chatBox)) {
-    botDiv.scrollIntoView({ behavior: 'smooth' });
-  }
+function showHistory() {
+  window.location.href = "history.html";
 }

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help & Emergency - Women Legal Rights</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= FIXED HEADER ================= -->
+  <div class="fixed-header">
+    <div class="header-left">
+      <div class="hamburger" onclick="toggleMenu()">☰</div>
+      <h1 class="title">❓ Help</h1>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="toggleTheme()">🌙</button>
+      <button onclick="logout()">🚪</button>
+    </div>
+  </div>
+
+  <!-- ================= SIDEBAR MENU ================= -->
+  <div id="sidebar" class="sidebar">
+    <div class="close-btn" onclick="toggleMenu()">✖</div>
+    <a href="profile.html">👤 Profile</a>
+    <a href="history.html">📜 History</a>
+    <a href="index.html">💬 Chat</a>
+    <a href="tel:181">🚨 Emergency 181</a>
+  </div>
+
+  <!-- ================= HELP CONTENT ================= -->
+  <div class="help-container">
+    <div class="help-card">
+      <h3>🚨 Emergency Helplines</h3>
+      
+      <div class="emergency-item">
+        <span class="emergency-icon">📞</span>
+        <div>
+          <div class="emergency-number">181</div>
+          <div>Domestic Violence Helpline</div>
+        </div>
+      </div>
+
+      <div class="emergency-item">
+        <span class="emergency-icon">🚔</span>
+        <div>
+          <div class="emergency-number">100</div>
+          <div>Police Emergency</div>
+        </div>
+      </div>
+
+      <div class="emergency-item">
+        <span class="emergency-icon">👩</span>
+        <div>
+          <div class="emergency-number">1091</div>
+          <div>Women Helpline</div>
+        </div>
+      </div>
+
+      <div class="emergency-item">
+        <span class="emergency-icon">🏥</span>
+        <div>
+          <div class="emergency-number">102</div>
+          <div>Ambulance</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 20px;">💬 How to Use NariBot</h3>
+      <p>You can ask questions about:</p>
+      <ul style="text-align: left; padding-left: 20px;">
+        <li>Domestic Violence Laws</li>
+        <li>Workplace Harassment</li>
+        <li>Dowry Laws</li>
+        <li>Property Rights</li>
+        <li>Divorce & Custody</li>
+      </ul>
+    </div>
+
+    <button class="back-button" onclick="goToChat()">⬅ Back to Chat</button>
+  </div>
+
+  <!-- ================= FIXED FOOTER ================= -->
+  <div class="fixed-footer">
+    <p>📞 Women Helpline: 181 | © 2024 Women Legal Rights</p>
+  </div>
+
+<script>
+  function toggleMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const currentLeft = sidebar.style.left;
+    if (currentLeft === "0px") {
+      sidebar.style.left = "-250px";
+    } else {
+      sidebar.style.left = "0px";
+    }
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("dark-mode");
+  }
+
+  function logout() {
+    localStorage.removeItem("isLoggedIn");
+    window.location.href = "index.html";
+  }
+
+  function goToChat() {
+    window.location.href = "index.html";
+  }
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -3,53 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Women Legal Rights Chatbot</title>
+  <title>Women Legal Rights ChatBot</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- LOGIN SECTION -->
+  <!-- ================= FIXED HEADER ================= -->
+  <div class="fixed-header">
+    <div class="header-left">
+      <div class="hamburger" onclick="toggleMenu()">☰</div>
+      <h1 class="title">👩‍⚖️ NariBot</h1>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="toggleTheme()">🌙</button>
+      <button onclick="logout()">🚪</button>
+    </div>
+  </div>
+
+  <!-- ================= SIDEBAR MENU ================= -->
+  <div id="sidebar" class="sidebar">
+    <!-- ❌ Close Button -->
+    <div class="close-btn" onclick="toggleMenu()">✖</div>
+    <a href="profile.html">👤 Profile</a>
+    <a href="history.html">📜 History</a>
+    <a href="help.html">❓ Help</a>
+    <a href="tel:181">🚨 Emergency 181</a>
+  </div>
+
+  <!-- ================= LOGIN SECTION ================= -->
   <div id="loginPage" class="form-container">
     <h2>Login</h2>
     <input type="email" id="loginEmail" placeholder="Email" required>
     <input type="password" id="loginPassword" placeholder="Password" required>
     <button onclick="login()">Login</button>
-    <p>Don't have an account? <a href="#" onclick="showSection('signupPage')">Sign up</a></p>
-    <p><a href="#" onclick="showSection('forgotPage')">Forgot Password?</a></p>
+    <p>Don't have an account? 
+      <a href="#" onclick="showSection('signupPage')">Sign up</a>
+    </p>
+    <p>
+      <a href="#" onclick="showSection('forgotPage')">Forgot Password?</a>
+    </p>
   </div>
 
-  <!-- SIGNUP SECTION -->
-  <div id="signupPage" class="form-container" style="display: none;">
+  <!-- ================= SIGNUP SECTION ================= -->
+  <div id="signupPage" class="form-container" style="display:none;">
     <h2>Sign Up</h2>
     <input type="text" id="signupName" placeholder="Full Name" required>
     <input type="email" id="signupEmail" placeholder="Email" required>
     <input type="password" id="signupPassword" placeholder="Password" required>
     <button onclick="signup()">Sign Up</button>
-    <p>Already have an account? <a href="#" onclick="showSection('loginPage')">Login</a></p>
+    <p>Already have an account? 
+      <a href="#" onclick="showSection('loginPage')">Login</a>
+    </p>
   </div>
 
-  <!-- FORGOT PASSWORD SECTION -->
-  <div id="forgotPage" class="form-container" style="display: none;">
+  <!-- ================= FORGOT PASSWORD ================= -->
+  <div id="forgotPage" class="form-container" style="display:none;">
     <h2>Forgot Password</h2>
     <input type="email" id="forgotEmail" placeholder="Enter your email" required>
     <button onclick="forgotPassword()">Send Reset Link</button>
-    <p><a href="#" onclick="showSection('loginPage')">Back to Login</a></p>
+    <p>
+      <a href="#" onclick="showSection('loginPage')">Back to Login</a>
+    </p>
   </div>
 
-  <!-- CHATBOT SECTION -->
-  <div id="chatPage" class="chat-container" style="display: none;">
-    <h2>Women Legal Rights Chatbot</h2>
+  <!-- ================= CHAT PAGE ================= -->
+  <div id="chatPage" class="chat-container" style="display:none;">
+    <!-- CHAT BOX -->
     <div id="chatBox" class="chat-box"></div>
+
+    <!-- INPUT AREA -->
+    <div class="input-area">
+      <input type="text" id="userInput"
+        placeholder="Ask about your rights..."
+        onkeypress="if(event.key==='Enter') sendMessage()">
+
+      <button onclick="sendMessage()">Send</button>
+      <button onclick="startListening()">🎤</button>
+    </div>
+
   </div>
-  <div class="input-area" style="display: none;">
-    <input type="text" id="userInput" placeholder="Ask about your rights..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">Send</button>
-    <button class="logout-btn" onclick="showSection('loginPage')">Logout</button>
-    <!-- <button id="recordBtn" onclick="toggleRecording()">🎤 Record</button>
-    <input type="file" id="fileInput" accept="image/*,audio/*,video/*,application/pdf" style="display: none;">
-    <button onclick="document.getElementById('fileInput').click()">📎 Upload File</button> -->
+
+  <!-- ================= FIXED FOOTER ================= -->
+  <div class="fixed-footer">
+    <p>📞 Women Helpline: 181 | © 2024 Women Legal Rights</p>
   </div>
 
   <script src="script.js"></script>
+  <!-- <script>
+    function scrollToBottom() {
+      const chatBox = document.getElementById("chatBox");
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script> -->
+</body>
 </html>
-

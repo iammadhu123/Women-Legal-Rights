@@ -6,55 +6,97 @@
   <title>Reset Password | Women Legal Chatbot</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="form-container">
     <h2>Reset Your Password</h2>
 
-    <input type="password" id="newPassword" placeholder="Enter new password" required />
-    <input type="password" id="confirmPassword" placeholder="Confirm password" required />
-    <button onclick="resetPassword()">Reset Password</button>
+    <div class="password-field">
+      <input type="password" id="newPassword" placeholder="Enter new password" required />
+      <span onclick="togglePassword('newPassword')">👁</span>
+    </div>
+
+    <div class="password-field">
+      <input type="password" id="confirmPassword" placeholder="Confirm password" required />
+      <span onclick="togglePassword('confirmPassword')">👁</span>
+    </div>
+
+    <button id="resetBtn" onclick="resetPassword()">Reset Password</button>
 
     <p><a href="index.html">Back to Login</a></p>
   </div>
 
-  <script>
-    const API_URL = "http://192.168.18.208:5000";
+<script>
+  const API_URL = "http://localhost:5000";  // change if needed
 
-    // URL se email & token nikal lo
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get("email");
-    const token = params.get("token");
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get("email");
+  const token = params.get("token");
 
-    async function resetPassword() {
-      const newPassword = document.getElementById("newPassword").value.trim();
-      const confirmPassword = document.getElementById("confirmPassword").value.trim();
+  // 🔹 If token or email missing → invalid link
+  if (!email || !token) {
+    alert("Invalid or expired reset link.");
+    window.location.href = "index.html";
+  }
 
-      if (!newPassword || !confirmPassword) {
-        alert("Please fill all fields!");
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-      }
+  function togglePassword(id) {
+    const field = document.getElementById(id);
+    field.type = field.type === "password" ? "text" : "password";
+  }
 
-      try {
-        const res = await fetch(`${API_URL}/reset-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, token, newPassword }),
-        });
-
-        const data = await res.json();
-        alert(data.message || data.error);
-        if (data.message) {
-          window.location.href = "index.html";
-        }
-      } catch (err) {
-        console.error("Reset error:", err);
-        alert("⚠️ Server error while resetting password");
-      }
+  function validatePassword(password) {
+    // Minimum 6 characters
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return false;
     }
-  </script>
+    return true;
+  }
+
+  async function resetPassword() {
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value.trim();
+    const btn = document.getElementById("resetBtn");
+
+    if (!newPassword || !confirmPassword) {
+      alert("Please fill all fields!");
+      return;
+    }
+
+    if (!validatePassword(newPassword)) return;
+
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Resetting...";
+
+    try {
+      const res = await fetch(`${API_URL}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, token, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.message) {
+        alert("✅ Password reset successful!");
+        window.location.href = "index.html";
+      } else {
+        alert(data.error || "Reset failed!");
+      }
+
+    } catch (err) {
+      alert("⚠️ Server error while resetting password.");
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Reset Password";
+  }
+</script>
+
 </body>
 </html>

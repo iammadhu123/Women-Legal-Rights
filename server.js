@@ -13,6 +13,7 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const multer = require("multer");
+const stringSimilarity = require("string-similarity");
 require("dotenv").config();
 
 const app = express();
@@ -32,13 +33,14 @@ app.use(express.static('public'));
 // ✅ Multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// ✅ MongoDB Connection
+// ✅ MongoDB Connection (use MONGO_URI from .env if provided)
+const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/women_legal_db";
 mongoose
-  .connect("mongodb://127.0.0.1:27017/women_legal_db", {
+  .connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => console.log("✅ MongoDB connected to", mongoUri))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ✅ User Schema
@@ -94,20 +96,31 @@ app.post("/login", async (req, res) => {
   console.log("📩 Login request:", req.body);
   try {
     const { email, password } = req.body;
-    if (!email || !password)
+    if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required!" });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.json({ error: "User not found!" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found!" });
+    }
+
+    if (!user.password) {
+      // defensive guard for malformed records
+      console.warn("⚠️ User has no password hash", email);
+      return res.status(500).json({ error: "Account not properly configured. Contact administrator." });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.json({ error: "Invalid password!" });
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid password!" });
+    }
 
     console.log("✅ Login successful:", email);
-    res.json({ message: "Login successful" });
+    res.json({ message: "Login successful", name: user.name });
   } catch (err) {
-    console.error("🔥 Login error:", err.message);
-    res.status(500).json({ error: "Server error during login" });
+    console.error("🔥 Login error:", err);
+    res.status(500).json({ error: err.message || "Server error during login" });
   }
 });
 
@@ -222,8 +235,6 @@ const loadCSVData = () => {
 
 loadCSVData(); // Load data on startup
 
-const stringSimilarity = require("string-similarity"); // <-- install: npm i string-similarity
-
 // ============================
 // 🔹 Gemini AI Chat + CSV Fallback
 // ============================
@@ -291,4 +302,5 @@ app.post("/chat", upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'file',
 // ✅ Start Server
 app.listen(5000, "0.0.0.0", () => {
   console.log("🚀 Server running on http://localhost:5000");
+  console.log("🔧 Make sure MongoDB is running (e.g. 'mongod' or use Atlas) and open the UI via http://localhost:5000 not file://");
 });
