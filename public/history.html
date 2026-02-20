@@ -3,102 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat History - Women Legal Rights</title>
+  <title>Chat History</title>
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    .history-content {
+      margin-top: 70px;
+      margin-bottom: 60px;
+      height: calc(100vh - 130px);
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .conversation {
+      background: #f5f5f5;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .conversation .time {
+      font-size: 12px;
+      color: gray;
+      margin-bottom: 6px;
+    }
+
+    .conversation .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      cursor: pointer;
+      color: red;
+    }
+
+    .dark-mode .conversation {
+      background: #2c2c2c;
+      color: white;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ================= FIXED HEADER ================= -->
-  <div class="fixed-header">
-    <div class="header-left">
-      <div class="hamburger" onclick="toggleMenu()">☰</div>
-      <h1 class="title">📜 Chat History</h1>
-    </div>
-    <div class="nav-buttons">
-      <button onclick="toggleTheme()">🌙</button>
-      <button onclick="logout()">🚪</button>
-    </div>
-  </div>
+<div class="fixed-header">
+  <h2>📜 Chat History</h2>
+</div>
 
-  <!-- ================= SIDEBAR MENU ================= -->
-  <div id="sidebar" class="sidebar">
-    <div class="close-btn" onclick="toggleMenu()">✖</div>
-    <a href="profile.html">👤 Profile</a>
-    <a href="index.html">💬 Chat</a>
-    <a href="help.html">❓ Help</a>
-    <a href="tel:181">🚨 Emergency 181</a>
-  </div>
+<div class="history-content" id="historyContainer"></div>
 
-  <!-- ================= HISTORY CONTENT ================= -->
-  <div class="history-content">
-    <div id="historyContainer" class="history-messages"></div>
-    
-    <div class="history-actions">
-      <button class="clear-btn" onclick="clearHistory()">🗑️ Clear History</button>
-      <button class="back-button" onclick="goToChat()">⬅ Back to Chat</button>
-    </div>
-  </div>
-
-  <!-- ================= FIXED FOOTER ================= -->
-  <div class="fixed-footer">
-    <p>📞 Women Helpline: 181 | © 2024 Women Legal Rights</p>
-  </div>
+<div class="fixed-footer">
+  <button onclick="clearHistory()">🗑 Clear All</button>
+  <button onclick="goToChat()">⬅ Back</button>
+</div>
 
 <script>
 
 function loadHistory() {
-    let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
-    let historyContainer = document.getElementById("historyContainer");
 
-    historyContainer.innerHTML = "";
+  let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+  const container = document.getElementById("historyContainer");
 
-    if (history.length === 0) {
-        historyContainer.innerHTML = '<div class="no-history">No chat history yet. Start a conversation!</div>';
-        return;
-    }
+  container.innerHTML = "";
 
-    history.forEach(chat => {
-        let div = document.createElement("div");
-        div.className = chat.sender === "You" ? "message user" : "message bot";
-        div.innerHTML = `<strong>${chat.sender}:</strong> ${chat.message}`;
-        historyContainer.appendChild(div);
-    });
+  if (history.length === 0) {
+    container.innerHTML = "<p>No chat history found.</p>";
+    return;
+  }
+
+  history.forEach((chat, index) => {
+
+    const div = document.createElement("div");
+    div.className = "conversation";
+
+    div.innerHTML = `
+      <div class="delete-btn" onclick="deleteConversation(${index})">❌</div>
+      <div class="time">${chat.time}</div>
+      <p><strong>You:</strong> ${chat.user}</p>
+      <p><strong>Bot:</strong> ${chat.bot}</p>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function deleteConversation(index) {
+  let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
+  history.splice(index, 1);
+  localStorage.setItem("chatHistory", JSON.stringify(history));
+  loadHistory();
 }
 
 function clearHistory() {
-    if (confirm("Are you sure you want to clear all chat history?")) {
-        localStorage.removeItem("chatHistory");
-        loadHistory();
-    }
+  if (confirm("Clear all chat history?")) {
+    localStorage.removeItem("chatHistory");
+    loadHistory();
+  }
 }
 
 function goToChat() {
-    window.location.href = "index.html";
-}
-
-function toggleMenu() {
-    const sidebar = document.getElementById("sidebar");
-    const currentLeft = sidebar.style.left;
-    if (currentLeft === "0px") {
-        sidebar.style.left = "-250px";
-    } else {
-        sidebar.style.left = "0px";
-    }
-}
-
-function toggleTheme() {
-    document.body.classList.toggle("dark-mode");
-}
-
-function logout() {
-    localStorage.removeItem("isLoggedIn");
-    window.location.href = "index.html";
+  window.location.href = "index.html";
 }
 
 window.onload = loadHistory;
 
 </script>
 
-<script src="script.js"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 // 🌐 Backend URL
 // ============================
 const API_URL = "http://localhost:5000";
+let voiceEnabled = false;
 
 
 // ============================
@@ -14,7 +15,6 @@ window.onload = function () {
   } else {
     showSection("loginPage");
   }
-  
 
   const input = document.getElementById("userInput");
   if (input) {
@@ -22,6 +22,8 @@ window.onload = function () {
       if (e.key === "Enter") sendMessage();
     });
   }
+
+  window.speechSynthesis.cancel(); // stop any previous voice
 };
 
 
@@ -37,12 +39,8 @@ function showSection(sectionId) {
   if (section) section.style.display = "block";
 
   if (sectionId === "chatPage") {
-    const chatBox = document.getElementById("chatBox");
-    if (chatBox) {
-      chatBox.innerHTML = "";
-      loadChatHistory();
-      scrollToBottom();
-    }
+    loadChatHistory();
+    scrollToBottom();
   }
 }
 
@@ -85,7 +83,7 @@ async function login() {
       alert(data.error || "Login failed!");
     }
 
-  } catch (err) {
+  } catch {
     alert("⚠️ Server error during login.");
   }
 }
@@ -117,7 +115,7 @@ async function signup() {
 
     if (data.message) showSection("loginPage");
 
-  } catch (err) {
+  } catch {
     alert("⚠️ Server error during signup.");
   }
 }
@@ -132,13 +130,10 @@ async function sendMessage() {
   const message = inputField.value.trim();
   if (!message) return;
 
-  // USER MESSAGE
   addMessage("user", message);
   inputField.value = "";
 
-  // BOT LOADING MESSAGE
   const botDiv = addMessage("bot", "Thinking...");
-
   scrollToBottom();
 
   try {
@@ -149,14 +144,15 @@ async function sendMessage() {
     });
 
     const data = await res.json();
-    const reply = data.reply || "AI service unavailable.";
+    const reply = data.reply?.trim() || "AI service unavailable.";
 
     botDiv.innerText = reply;
 
-    speakText(reply);
     saveChat(message, reply);
 
-  } catch (err) {
+    if (voiceEnabled) speakText(reply);
+
+  } catch {
     botDiv.innerText = "⚠️ Server error. Please try again.";
   }
 
@@ -165,36 +161,43 @@ async function sendMessage() {
 
 
 // ============================
-// 🔹 ADD MESSAGE (FIXED)
+// 🔹 ADD MESSAGE
 // ============================
 function addMessage(sender, text) {
 
   const chatBox = document.getElementById("chatBox");
-  if (!chatBox) return null;
+  if (!chatBox) return;
 
-  const message = document.createElement("div");
-  message.classList.add("message", sender);
-  message.innerText = text;
+  const shouldScroll = isUserAtBottom();
 
-  chatBox.appendChild(message);
+  const messageDiv = document.createElement("div");
+  messageDiv.classList.add("message", sender);
+  messageDiv.innerText = text;
 
-  setTimeout(() => {
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 50);
+  chatBox.appendChild(messageDiv);
 
-  return message;   // ✅ VERY IMPORTANT
+  if (shouldScroll) {
+    setTimeout(() => {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }, 50);
+  }
+
+  return messageDiv;
 }
 
 
 // ============================
-// 🔹 CHAT HISTORY
+// 🔹 CHAT HISTORY (Grouped)
 // ============================
 function saveChat(userMsg, botMsg) {
 
   let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
 
-  history.push({ sender: "You", message: userMsg });
-  history.push({ sender: "Bot", message: botMsg });
+  history.push({
+    user: userMsg,
+    bot: botMsg,
+    time: new Date().toLocaleString()
+  });
 
   localStorage.setItem("chatHistory", JSON.stringify(history));
 }
@@ -202,24 +205,35 @@ function saveChat(userMsg, botMsg) {
 
 function loadChatHistory() {
 
+  const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return;
+
   let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
 
+  chatBox.innerHTML = "";
+
   history.forEach(chat => {
-    addMessage(
-      chat.sender === "You" ? "user" : "bot",
-      chat.message
-    );
+
+    addMessage("user", chat.user);
+    addMessage("bot", chat.bot);
+
   });
 }
 
 
 // ============================
-// 🔹 SCROLL FIX
+// 🔹 SCROLL
 // ============================
-function scrollToBottom() {
-
+function isUserAtBottom() {
   const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return true;
 
+  const threshold = 100;
+  return chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < threshold;
+}
+
+function scrollToBottom() {
+  const chatBox = document.getElementById("chatBox");
   if (chatBox) {
     chatBox.scrollTo({
       top: chatBox.scrollHeight,
@@ -230,7 +244,26 @@ function scrollToBottom() {
 
 
 // ============================
-// 🔹 VOICE RECOGNITION
+// 🔹 VOICE FUNCTIONS
+// ============================
+function speakText(text) {
+
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-IN";
+
+  window.speechSynthesis.speak(speech);
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  alert("Voice mode: " + (voiceEnabled ? "ON" : "OFF"));
+}
+
+
+// ============================
+// 🔹 VOICE INPUT
 // ============================
 function startListening() {
 
@@ -251,28 +284,13 @@ function startListening() {
 
 
 // ============================
-// 🔹 TEXT TO SPEECH
-// ============================
-function speakText(text) {
-  const speech = new SpeechSynthesisUtterance(text);
-  speech.lang = "en-IN";
-  window.speechSynthesis.speak(speech);
-}
-
-
-// ============================
-// 🔹 DARK MODE
+// 🔹 UI FUNCTIONS
 // ============================
 function toggleTheme() {
   document.body.classList.toggle("dark-mode");
 }
 
-
-// ============================
-// 🔹 HAMBURGER MENU
-// ============================
 function toggleMenu() {
-
   const sidebar = document.getElementById("sidebar");
   if (!sidebar) return;
 
@@ -280,20 +298,11 @@ function toggleMenu() {
     sidebar.style.left === "0px" ? "-250px" : "0px";
 }
 
-
-// ============================
-// 🔹 LOGOUT
-// ============================
 function logout() {
-
   localStorage.removeItem("isLoggedIn");
   showSection("loginPage");
 }
 
-
-// ============================
-// 🔹 NAVIGATION
-// ============================
 function goToChat() {
   window.location.href = "index.html";
 }
