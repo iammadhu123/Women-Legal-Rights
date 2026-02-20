@@ -8,6 +8,7 @@
 - [x] Update history.html - Center heading and improve button
 - [x] Update index.html - Add fixed header
 - [x] Update chat.html - Add fixed header
+- [x] Improve chatbot response accuracy - Lowered CSV matching threshold from 0.65 to 0.3
 
 ## Summary of Changes Made:
 
@@ -35,7 +36,15 @@
 - Added clear numbering and styling
 - Made the page more visually appealing
 
-### 6. Chatbot Robustness
-- Server already has proper CSV matching with string-similarity
-- Lowered threshold to 0.3 for better matching
+### 6. Chatbot Robustness (Improved & Tested)
+- Server has proper CSV matching with string-similarity
+- ✅ Lowered threshold from 0.65 to 0.3 for BETTER matching
+- ✅ Tested with multiple queries - All working correctly:
+  - "divorce" → Hindu Marriage Act info
+  - "dowry" → Dowry Prohibition Act 1961
+  - "domestic violence" → Protection of Women from Domestic Violence Act 2005
+  - "sexual harassment" → POSH Act 2013
+  - "maternity leave" → Maternity Benefit Act
+  - "maintenance" → Section 125 CrPC
+  - "workplace safety" → Factories Act 1948
 - Falls back to Gemini AI when no CSV match found

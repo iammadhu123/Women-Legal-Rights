@@ -220,7 +220,7 @@ app.post("/chat", upload.none(), async (req, res) => {
         questions
       );
 
-      if (match.bestMatch.rating > 0.65) {
+      if (match.bestMatch.rating > 0.3) {
         const found = legalData[match.bestMatchIndex];
 
         let reply = found.answer;
